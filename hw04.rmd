@@ -79,7 +79,7 @@ We can also gather some columns instead of all.
 
 ```{r}
 gather_some_attributes <- mtcars_with_car %>% 
-  #gather only mpg to gear
+  # gather only mpg to gear
   gather(attribute, value, mpg:gear)
 
 # show previews
@@ -259,6 +259,7 @@ reshape_mean_lifeExp %>%
 ```
 
 The two plots are basically the same, except:
+
 - Using the origianl tibble we need to filter data;
 - The default label of y axis in the second figure is "Africa", and we do not need to change it.
 
