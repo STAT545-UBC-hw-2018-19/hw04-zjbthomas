@@ -1,0 +1,169 @@
+---
+title: "STAT 545A Homework 4"
+author: "Junbin ZHANG"
+date: "Sept 25, 2018"
+output:
+  html_document:
+    keep_md: true
+---
+
+# Bring rectangular data in
+```{r}
+## load gapminder
+library(gapminder)
+## load tidyverse
+library(tidyverse)
+```
+
+# Data Reshaping Prompts (and relationship to aggregation)
+
+## Activity #1
+
+In this section, we try to explore the following functions in `tidyr`:
+- `gather()`: converts wide data to longer format.
+- `spread()`: converts long data to wider format.
+- `unite()`: combines two or more columns into a single column.
+- `separate()`: splits one column into two or more columns.
+
+We are going to use `mtcars` and `gapminder` as the databases.
+
+```{r}
+# show a preview of mtcars
+head(mtcars) %>% 
+  knitr::kable()
+```
+
+We give the first column a name ("car") so it is better to manipulate. In fact, the first column in the above table is the `rownames()` of the table.
+
+```{r}
+# add a new column and assign rownames() to it
+mtcars$car <- rownames(mtcars)
+# reshape the data frame
+mtcars_with_car <- mtcars[, c(12, 1:11)]
+# show a preview of modified mtcars
+head(mtcars_with_car) %>% 
+  knitr::kable()
+```
+
+
+### `gather()`
+
+#### Format of `gather()`
+
+`gather(data, key, value, ..., na.rm = FALSE, convert = FALSE)`
+
+Here `...` is the specification of the columns to gather.
+
+#### Demos
+
+`gather()` tries to create key-value pairs for a given data frame. In the first demos, we use `car` as the index, and different attribute as keys and show their corresponding values.
+
+```{r}
+gather_attributes <- mtcars_with_car %>% 
+  # list all different attributes in column "attribute", use "car" as index (so it is not included in the reshape)
+  gather(attribute, value, -car)
+
+# show previews 
+head(gather_attributes) %>% 
+  knitr::kable()
+
+tail(gather_attributes) %>% 
+  knitr::kable()
+```
+
+We can also gather some columns instead of all.
+
+```{r}
+gather_some_attributes <- mtcars_with_car %>% 
+  #gather only mpg to gear
+  gather(attribute, value, mpg:gear)
+
+# show previews
+head(gather_some_attributes) %>% 
+  knitr::kable()
+
+tail(gather_some_attributes) %>% 
+  knitr::kable()
+```
+
+### `spread()`
+
+#### Format of `spread()`
+
+`spread(data, key, value, fill = NA, convert = FALSE, drop = TRUE)`
+
+#### Demos
+
+`spread()` can be considered as a reversed operation of `gather()`.
+
+```{r}
+# spread attribute and value
+mtcars_spread <- gather_attributes %>% 
+  spread(attribute, value)
+
+# show a preview
+head(mtcars_spread) %>% 
+  knitr::kable()
+```
+
+### `unite()`
+
+#### Format of `unite()`
+
+`unite(data, col, ..., sep = "_", remove = TRUE)`
+
+Here `...` represents the columns to unite and `col` represents the column to add.
+
+#### Demos
+
+In this demo, we try to unite `pop` and `gdpPercap` into the same column in `gapminder`. Notice it just shows the new column as a multiplication of `pop` and `gdpPercap`, but no calculation will be performed.
+
+```{r}
+# unite to have overall_gdp
+unite_gdp <- gapminder %>% 
+  unite(overall_gdp, pop, gdpPercap, sep = "*")
+
+# show a preview
+head(unite_gdp) %>% 
+  knitr::kable()
+```
+
+
+### `separate()`
+
+#### Format of `separate()`
+
+`separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn", ...)`
+
+#### Demos
+
+`separate()` can be considered as a reversed operation of `unite()`.
+
+```{r}
+# separate into original columns. Notice that we need to use two backslashes as escape character.
+sep_gdp <- unite_gdp %>% 
+  separate(overall_gdp, c("pop", "gdpPercap"), sep="\\*")
+
+# show a preview
+head(sep_gdp) %>% 
+  knitr::kable()
+```
+
+## Activity #2
+
+## Activity #3
+
+## Activity #4
+
+## Activity #5
+
+# Join Prompts (join, merge, look up)
+
+## Activity #1
+
+## Activity #2
+
+## Activity #3
+
+# References
+- [Data manipulation with tidyr](https://www.r-bloggers.com/data-manipulation-with-tidyr/)
