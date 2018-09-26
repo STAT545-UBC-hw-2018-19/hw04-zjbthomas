@@ -5,6 +5,7 @@ date: "Sept 25, 2018"
 output:
   html_document:
     keep_md: true
+    toc: true
 ---
 
 # Bring rectangular data in
@@ -18,6 +19,8 @@ library(tidyverse)
 # Data Reshaping Prompts (and relationship to aggregation)
 
 ## Activity #1
+
+**Make your own cheatsheet.**
 
 In this section, we try to explore the following functions in `tidyr`:
 - `gather()`: converts wide data to longer format.
@@ -151,9 +154,157 @@ head(sep_gdp) %>%
 
 ## Activity #2
 
+**Make a tibble with one row per year and columns for life expectancy for two or more countries.**
+
+Let's select countries in Oceania.
+
+```{r}
+lifeExp_Oceania <- gapminder %>% 
+  # filter countries in Oceania
+  filter(continent == "Oceania") %>% 
+  # select necessary columns, make year as the first column
+  select(year, country, lifeExp) %>% 
+  # spread country to columns, with lifeExp as values
+  spread(country, lifeExp)
+
+# display the table
+lifeExp_Oceania %>% 
+  knitr::kable()
+```
+
+In Oceania we only have two countries. Then we make a scatterplot of the new tibble. First, we show the trends of lifeExp over years in these two countries.
+
+```{r}
+# fix names with spaces
+names(lifeExp_Oceania) <- str_replace_all(names(lifeExp_Oceania), " ", "_")
+
+lifeExp_Oceania %>% 
+  ggplot() +
+  # make a line plot with points for Australia
+  geom_line(aes(x=year, y=Australia, color="Australia")) +
+  geom_point(aes(x=year, y=Australia, color="Australia")) +
+  # make a line plot with points for New_Zealand
+  geom_line(aes(x=year, y=New_Zealand, color="New Zealand")) +
+  geom_point(aes(x=year, y=New_Zealand, color="New Zealand")) +
+  # change color legent
+  scale_color_discrete("country")
+```
+
+Let's also compare them side-by-side.
+
+```{r}
+lifeExp_Oceania %>% 
+  # Auatralia as x axis and New_Zealand as y axis, color as year
+  ggplot(aes(x=Australia, y=New_Zealand, color=factor(year))) +
+  # make it a scatterplot
+  geom_point() +
+  # try to draw a regression curve
+  geom_smooth(method="lm", se=FALSE, color="black")
+```
+
+We can learn from the figures that, after around 1973, the lifeExp in Australia becomes larger than New_Zealand.
+
 ## Activity #3
 
+**Compute some measure of life expectancy (mean? median? min? max?) for all possible combinations of continent and year. Reshape that to have one row per year and one variable for each continent. Or the other way around: one row per continent and one variable per year.**
+
+Let's first compute the means of life expectancy for every possible combinations of continent and year.
+
+```{r}
+mean_lifeExp <- gapminder %>% 
+  # group by continent and year
+  group_by(continent, year) %>%
+  # calculate the means
+  summarise(
+    mean_lifeExp = mean(lifeExp)
+  )
+
+# show the table
+mean_lifeExp %>% 
+  knitr::kable()
+```
+
+Then we reshape it to one row per year and one variable for each continent.
+
+```{r}
+# use spread to reshape continent as columns
+reshape_mean_lifeExp <- mean_lifeExp %>%
+  spread(continent, mean_lifeExp)
+
+# show the table
+reshape_mean_lifeExp %>% 
+  knitr::kable()
+```
+
+The reshaped tibble is better, if you only want to have data of one continent. For example, we try to get data of Africa and show it as line plot.
+
+```{r}
+# original tibble
+mean_lifeExp %>% 
+  # need to filter continent as Africa
+  filter(continent == "Africa") %>% 
+  # year as x axis and mean_lifeExp as y axis
+  ggplot(aes(x=year, y=mean_lifeExp)) +
+  # make it a line plot with point
+  geom_line() +
+  geom_point()
+
+reshape_mean_lifeExp %>% 
+  # year as x axis and Africa as y axis
+  ggplot(aes(x=year, y=Africa)) +
+  # make it a line plot with point
+  geom_line() +
+  geom_point()
+```
+
+The two plots are basically the same, except:
+- Using the origianl tibble we need to filter data;
+- The default label of y axis in the second figure is "Africa", and we do not need to change it.
+
 ## Activity #4
+
+**In [Window functions](http://stat545.com/block010_dplyr-end-single-table.html#window-functions), we formed a tibble with 24 rows: 2 per year, giving the country with both the lowest and highest life expectancy (in Asia). Take that table (or a similar one for all continents) and reshape it so you have one row per year or per year * continent combination.**
+
+First we get the table from the reference.
+
+```{r}
+# this piece of code is directly from the reference, so no commend is added
+my_gap <- gapminder %>%
+  filter(continent == "Asia") %>%
+  select(year, country, lifeExp) %>%
+  group_by(year) %>%
+  filter(min_rank(desc(lifeExp)) < 2 | min_rank(lifeExp) < 2) %>% 
+  arrange(year) %>%
+  print(n = Inf)
+```
+
+We reshape it into one row per year.
+
+```{r}
+# unite country and lifeExp
+my_gap_unite <- my_gap %>% 
+  unite(country_lifeExp, country, lifeExp, sep=",")
+
+# get maximum records for each year (even rows)
+my_gap_max <- my_gap_unite %>% 
+  filter(row_number() %% 2 == 0)
+
+# get minimum records for each year (odd rows)
+my_gap_min <- my_gap_unite %>% 
+  filter(row_number() %% 2 == 1)
+
+# combine data together
+my_gap_final <- data.frame(
+  year = my_gap_max$year,
+  max_country_lifeExp = my_gap_max$country_lifeExp,
+  min_country_lifeExp = my_gap_min$country_lifeExp
+)
+
+# show the table
+my_gap_final %>% 
+  knitr::kable()
+```
+
 
 ## Activity #5
 
