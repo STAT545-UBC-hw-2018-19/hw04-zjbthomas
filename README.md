@@ -6,4 +6,4 @@
 
 This repo contains the following files:
 - This [README](README.md) file; 
-- A [R markdown](hw04.rmd) file for Homework 04. This R Markdown file is the source code used by R Studio only. If you want to see the final results/graphs/tables, please refer to [HTML preview](https://htmlpreview.github.io/?https://github.com/STAT545-UBC-students/hw04-zjbthomas/blob/master/hw04.html) (recommended) or [knitted HTML](hw04.html).
+- A [R markdown](hw04.rmd) file for Homework 04. This R Markdown file is the source code used by R Studio only. If you want to see the final results/graphs/tables, please refer to [HTML preview](https://cdn.rawgit.com/STAT545-UBC-students/hw04-zjbthomas/0418ec1f/hw04.html) (recommended) or [knitted HTML](hw04.html).

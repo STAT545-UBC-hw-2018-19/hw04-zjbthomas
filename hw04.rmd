@@ -307,16 +307,249 @@ my_gap_final %>%
   knitr::kable()
 ```
 
-
 ## Activity #5
+
+**Make up a similar set of exercises for yourself, in the abstract or (even better) using Gapminder or other data, and solve them.**
+
+According to the [data manipulation sample](https://gist.github.com/aammd/11386424), some of the functions have been already covered in the previous assignemtns:
+
+- Group using `group_by()` and show statistics using `summarize()`.
+- Subset using `filter()`.
+- Sort using `arragnge()`.
+
+We are going to explore the following functions in the next section, so we can also skip them right now:
+
+- Join using `left_join()` and `merge()`.
+
+Therefore, we focus on the following functions:
+
+- Split using `dcast()`.
+- Stack using `melt()`.
+- Transpose using `t()`.
+
+Some of these functions belong to package `reshape2`, and assuming it is already installed.
+
+```{r}
+# load reshape2
+library(reshape2)
+```
+
+
+### Split
+
+Here we show that `dcast()` is actually similar to `spread()`. The following example is retrieved form Activity #4.
+
+```{r}
+split <- my_gap %>% 
+  # year as rows and country as columns, fill lifeExp as values
+  dcast(year~country, value.var="lifeExp")
+
+# display the table
+split %>% 
+  knitr::kable()
+```
+
+### Stack
+
+Here we show that `melt()` is actually similar to `group()`. The following example is retrieved from Activity #1.
+
+```{r}
+melt_attributes <- mtcars_with_car %>% 
+  # melt and use car as index
+  melt(id="car")
+
+# show previews 
+head(melt_attributes) %>% 
+  knitr::kable()
+
+tail(melt_attributes) %>% 
+  knitr::kable()
+```
+
+
+### Transpose
+
+Let's try to transpose `mtcars`.
+
+```{r}
+# remove car
+mtcars_ori <- mtcars %>% 
+  select(-car)
+
+# transpose data frame
+mtcars_transpose <- data.frame(t(mtcars_ori))
+
+# display the 
+mtcars_transpose %>% 
+  knitr::kable()
+```
 
 # Join Prompts (join, merge, look up)
 
 ## Activity #1
 
-## Activity #2
+**Create a second data frame, complementary to Gapminder. Join this with (part of) Gapminder using a dplyr join function and make some observations about the process and result. Explore the different types of joins.**
+
+According to [Data from Gapminder](https://cran.r-project.org/web/packages/gapminder/gapminder.pdf), there is a data frame called `country_codes` in package `gapminder`, which is suitable in our example.
+
+```{r}
+# show a preview of country_code
+head(country_codes) %>% 
+  knitr::kable()
+```
+
+`country_codes` contains rows for all country, so somehow for every row in the full `gapminder` data frame, we can find at least one matching records in `country_codes`. To make it more intersting, we trim `gapminder` to include only countries in "Americas". We also try to select a single year, say 1952.
+
+```{r}
+gapminder_Americas <- gapminder %>% 
+  # filter continent as Americas
+  filter(continent == "Americas", year == 1952)
+
+# show a preview
+head(gapminder_Americas) %>% 
+  knitr::kable()
+```
+
+
+We explore the following join functions:
+
+- `inner_join()`: return all rows from x where there are matching values in y, and all columns from x and y. If there are multiple matches between x and y, all combination of the matches are returned. This is a mutating join.
+- `semi_join()`: return all rows from x where there are matching values in y, keeping just columns from x. A semi join differs from an inner join because an inner join will return one row of x for each matching row of y, where a semi join will never duplicate rows of x. This is a filtering join.
+- `left_join()`: return all rows from x, and all columns from x and y. If there are multiple matches between x and y, all combination of the matches are returned. This is a mutating join.
+- `anti_join()`: return all rows from x where there are not matching values in y, keeping just columns from x. This is a filtering join.
+- `full_join()`: return all rows and all columns from both x and y. Where there are not matching values, returns NA for the one missing. This is a mutating join.
+
+### `inner_join()`
+
+In the following two examples, we change the order of `x` and `y`.
+
+```{r}
+inner_join(x=gapminder_Americas, y=country_codes) %>% 
+  knitr::kable()
+```
+
+```{r}
+inner_join(x=country_codes, y=gapminder_Americas) %>% 
+  knitr::kable()
+```
+
+After `inner_join()`, we get rows with countries only exist in `gapminder_Americas`, but for each row, we have columns both from `gapminder_Americas` and `country_codes`. Changing the order of `x` and `y` does not affect the results, since `inner_join()` tries to find overlapping countries in two data frames.
+
+### `semi_join()`
+
+In the following two examples, we change the order of `x` and `y`.
+
+```{r}
+semi_join(x=gapminder_Americas, y=country_codes) %>% 
+  knitr::kable()
+```
+
+```{r}
+semi_join(x=country_codes, y=gapminder_Americas) %>% 
+  knitr::kable()
+```
+
+Compare to `inner_join()`, `semi_join()` also returns overlapping countries only as rows. However, the columns depend on which data frame is provided as `x`.
+
+### `left_join()`
+
+In the following two examples, we change the order of `x` and `y`.
+
+```{r}
+left_join(x=gapminder_Americas, y=country_codes) %>% 
+  knitr::kable()
+```
+
+```{r}
+left_join(x=country_codes, y=gapminder_Americas)  %>% 
+  knitr::kable()
+```
+
+Using `left_join()`, rows depend on what countries we have in `x`. All columns in `x` and `y` are used to form the final table. However, since we cannot find all countries in `gapminder_Americas`, for those countries only exist in `country_codes`, the values are `NA` for columns in `gapminder_Americas`.
+
+### `anti_join()`
+
+In the following two examples, we change the order of `x` and `y`.
+
+```{r}
+anti_join(x=gapminder_Americas, y=country_codes) %>% 
+  knitr::kable()
+```
+
+```{r}
+anti_join(x=country_codes, y=gapminder_Americas)  %>% 
+  knitr::kable()
+```
+
+`anti_join()` is interesting that it shows rows in `x` that cannot be found a matching value in `y`, and columns to shown depend on `x`:
+
+- Since one can find all country in `gapminder_Americas` in `country_codes`, the first table is empty.
+- The second table actually shows countries that do not exist in `gapminder_Americas`.
+
+### `full_join()`
+
+In the following two examples, we change the order of `x` and `y`.
+
+```{r}
+full_join(x=gapminder_Americas, y=country_codes) %>% 
+  knitr::kable()
+```
+
+```{r}
+full_join(x=country_codes, y=gapminder_Americas)  %>% 
+  knitr::kable()
+```
+
+It is expected that the above two tables generated by `full_join()` have the same results, since this function shows all rows and columns from both `x` and `y`. Due to the data frames we choose (countries in `gapminder_Americas` is actually a subset of `country_codes`), the resultant tables are with the identical data as running `left_join(x=country_codes, y=gapminder_Americas)`.
 
 ## Activity #3
 
+### `merge()`
+
+In the following two examples, we change the order of `x` and `y`.
+
+```{r}
+merge(x=gapminder_Americas, y=country_codes) %>% 
+  knitr::kable()
+```
+
+```{r}
+merge(x=country_codes, y=gapminder_Americas) %>% 
+  knitr::kable()
+```
+
+From the results, by default, we can conclude that `merge()` is the same as `inner_join()`.
+
+Actually it is also possible to use `merge()` to implement `full_join()` and `left_join()`.
+
+#### Implement `full_join()` using `merge()`
+
+```{r}
+merge(x=gapminder_Americas, y=country_codes, all=TRUE) %>% 
+  knitr::kable()
+```
+
+#### Implement `left_join()` using `merge()`
+
+Notice that the order of `x` and `y` is important in this example.
+
+```{r}
+merge(x=gapminder_Americas, y=country_codes, all.x=TRUE) %>% 
+  knitr::kable()
+```
+
+### `match()`
+
+```{r}
+match(gapminder_Americas$country, country_codes$country) %>% 
+  knitr::kable()
+```
+
+For the example we can know, there are some disadvantages using `match()` compared to `merge()` or join functions:
+
+- It only works for two vectors.
+- It only returns indeces of matching items.
+
 # References
 - [Data manipulation with tidyr](https://www.r-bloggers.com/data-manipulation-with-tidyr/)
+- [Cheatsheet for dplyr join functions](http://stat545.com/bit001_dplyr-cheatsheet.html)
