@@ -25,17 +25,31 @@ suppressPackageStartupMessages(library(tidyverse))
 
 In this section, we try to explore the following functions in `tidyr`:
 
-- `gather()`: converts wide data to longer format.
-- `spread()`: converts long data to wider format.
-- `unite()`: combines two or more columns into a single column.
-- `separate()`: splits one column into two or more columns.
+- Commonly-used functions:
+  - `gather()`: converts wide data to longer format.
+  - `spread()`: converts long data to wider format.
+  - `unite()`: combines two or more columns into a single column.
+  - `separate()`: splits one column into two or more columns.
+- Other functions:
+  - `expand()`: is often useful in conjunction with `left_join()` if you want to convert implicit missing
+values to explicit missing values. Or you can use it in conjunction with `anti_join()` to figure out
+which combinations are missing.
+  - `complete()`: turns implicit missing values into explicit missing values. This is a wrapper around `expand()`, `dplyr::left_join()` and `replace_na()` that's useful for completing missing combinations of data.
+  - `separate_rows()`: if a variable contains observations with multiple delimited values, this separates the values and places each one in its own row.
+  - `uncount()`: performs the opposite opperation to `dplyr::count()`, duplicating rows acoording to a weighting variable (or expression).
+  - `drop_na()`: drops rows containing missing values.
+  - `replace_na()`: replaces missing values.
+  - `fill()`: fills missing values in using the previous entry. This is useful in the common output format where values are not repeated, they're recorded each time they change.
+  - `full_seq()`: this is useful if you want to fill in missing values that should have been observed but weren't.
 
 We are going to use `mtcars` and `gapminder` as the databases.
 
 ```{r}
 # show a preview of mtcars
 head(mtcars) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 We give the first column a name ("car") so it is better to manipulate. In fact, the first column in the above table is the `rownames()` of the table.
@@ -47,19 +61,21 @@ mtcars$car <- rownames(mtcars)
 mtcars_with_car <- mtcars[, c(12, 1:11)]
 # show a preview of modified mtcars
 head(mtcars_with_car) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 
 ### `gather()`
 
-#### Format of `gather()`
+#### Usage
 
 `gather(data, key, value, ..., na.rm = FALSE, convert = FALSE)`
 
 Here `...` is the specification of the columns to gather.
 
-#### Demos
+#### Example(s)
 
 `gather()` tries to create key-value pairs for a given data frame. In the first demos, we use `car` as the index, and different attribute as keys and show their corresponding values.
 
@@ -70,10 +86,14 @@ gather_attributes <- mtcars_with_car %>%
 
 # show previews 
 head(gather_attributes) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 
 tail(gather_attributes) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 We can also gather some columns instead of all.
@@ -85,19 +105,23 @@ gather_some_attributes <- mtcars_with_car %>%
 
 # show previews
 head(gather_some_attributes) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 
 tail(gather_some_attributes) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ### `spread()`
 
-#### Format of `spread()`
+#### Usage
 
 `spread(data, key, value, fill = NA, convert = FALSE, drop = TRUE)`
 
-#### Demos
+#### Example(s)
 
 `spread()` can be considered as a reversed operation of `gather()`.
 
@@ -108,18 +132,20 @@ mtcars_spread <- gather_attributes %>%
 
 # show a preview
 head(mtcars_spread) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ### `unite()`
 
-#### Format of `unite()`
+#### Usage
 
 `unite(data, col, ..., sep = "_", remove = TRUE)`
 
 Here `...` represents the columns to unite and `col` represents the column to add.
 
-#### Demos
+#### Example(s)
 
 In this demo, we try to unite `pop` and `gdpPercap` into the same column in `gapminder`. Notice it just shows the new column as a multiplication of `pop` and `gdpPercap`, but no calculation will be performed.
 
@@ -130,17 +156,19 @@ unite_gdp <- gapminder %>%
 
 # show a preview
 head(unite_gdp) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 
 ### `separate()`
 
-#### Format of `separate()`
+#### Usage
 
 `separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE, convert = FALSE, extra = "warn", fill = "warn", ...)`
 
-#### Demos
+#### Example(s)
 
 `separate()` can be considered as a reversed operation of `unite()`.
 
@@ -151,7 +179,239 @@ sep_gdp <- unite_gdp %>%
 
 # show a preview
 head(sep_gdp) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
+```
+
+### `expand()`
+
+#### Usage
+
+`expand(data, ...)`
+
+Here `...` represents the columns to expand.
+
+#### Example(s)
+
+`expand()` can show all possible combinations of columns, even those are not present in the data.
+
+```{r}
+expand(mtcars, vs, cyl) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make it look better
+  kableExtra::kable_styling(full_width = F)
+```
+
+We can also use `nesting()` to show only combinations that appear in the data.
+
+```{r}
+expand(mtcars, nesting(vs, cyl)) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make it look better
+  kableExtra::kable_styling(full_width = F)
+```
+
+### `complete()`
+
+#### Usage
+
+`complete(data, ..., fill = list())`
+
+Here `...` represents the columns to expand.
+
+#### Example(s)
+
+In this example, we try to compare `complete()` with `expand()`.
+
+```{r}
+mtcars_complete <- complete(mtcars, vs, cyl)
+
+# show the table
+mtcars_complete %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
+```
+
+`complete()` tries to show all rows for every combinations regarding column `vs` and `cyl`.
+
+We can also replace `NA` with what we specify in `fill`.
+
+```{r}
+# show the last six rows to display the filling effect
+tail(complete(mtcars, vs, cyl, fill = list(mpg = 0))) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
+```
+
+### `separate_rows()`
+
+#### Usage
+
+`separate_rows(data, ..., sep = "[^[:alnum:].]+", convert = FALSE)`
+
+Here `...` represents the columns to separate.
+
+#### Example(s)
+
+`separate_rows()` is a more flexible version of `separate()`: there can be different numbers of delimited values in each row.
+
+```{r}
+# create a data frame for demo
+df <- data.frame(
+  x = 1:3,
+  y = c("a", "d,e,f", "g,h"),
+  z = c("1", "2,3,4", "5,6"),
+  stringsAsFactors = FALSE
+)
+
+# display the data frame
+df %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make it look better
+  kableExtra::kable_styling(full_width = F)
+```
+
+In `df`, there are 3 delimited values in the second row, and 2 delimited values in the third row.
+
+```{r}
+# use "convert = TRUE" to convert column z to int
+separate_rows(df, y, z, convert = TRUE) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make it look better
+  kableExtra::kable_styling(full_width = F)
+```
+ 
+### `uncount()`
+
+#### Usage
+
+`uncount(data, weights, .remove = TRUE, .id = NULL)`
+
+#### Example(s)
+
+We create a tibble with two rows as an example.
+
+```{r}
+# create a data frame for demo
+df <- tibble(
+  x = c("a", "b"),
+  n = c(1, 2)
+)
+
+# display the data frame
+df %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make it look better
+  kableExtra::kable_styling(full_width = F)
+```
+
+Now we use column `n` as weights, and the tibble is expanded to 3 rows: 1 for `a` and 2 for `b`.
+
+```{r}
+uncount(df, n) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make it look better
+  kableExtra::kable_styling(full_width = F)
+```
+
+### `drop_na()`
+
+#### Usage
+
+`drop_na(data, ...)`
+
+Here `...` represents the columns to select.
+
+#### Example(s)
+
+The last row of `mtcars_complete` is with missing values, we try to drop it.
+
+```{r}
+# display preview before dropping missing values
+tail(mtcars_complete) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
+```
+
+```{r}
+# display preview after dropping missing values
+tail(drop_na(mtcars_complete)) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
+```
+
+### `replace_na()`
+
+#### Usage
+
+`replace_na(data, replace, ...)`
+
+Here `...` is currently unused.
+
+#### Example(s)
+
+The last row of `mtcars_complete` is with missing values, we try to replace it with 0.
+
+```{r}
+# display preview before replacing missing values
+tail(mtcars_complete) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
+```
+
+```{r}
+# display preview after replacing missing values
+tail(replace_na(mtcars_complete, list(mpg = 0, disp = 0))) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
+```
+
+### `fill()`
+
+#### Usage
+
+`fill(data, ..., .direction = c("down", "up"))`
+
+Here `...` represents the columns to expand.
+
+#### Example(s)
+
+The last row of `mtcars_complete` is with missing values, we try to fill it with values of its above row.
+
+```{r}
+# display preview before filling missing values
+tail(mtcars_complete) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
+```
+
+```{r}
+# display preview after filling missing values
+tail(fill(mtcars_complete, mpg:carb)) %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
+```
+
+### `full_seq()`
+
+#### Usage
+
+`full_seq(x, period, tol = 1e-06)`
+
+#### Example(s)
+
+```{r}
+# try to fill in missing values in 1:10
+full_seq(c(1, 2, 4, 5, 10), 1)
 ```
 
 ## Activity #2
@@ -171,7 +431,9 @@ lifeExp_Oceania <- gapminder %>%
 
 # display the table
 lifeExp_Oceania %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 In Oceania we only have two countries. Then we make a scatterplot of the new tibble. First, we show the trends of lifeExp over years in these two countries.
@@ -223,7 +485,9 @@ mean_lifeExp <- gapminder %>%
 
 # show the table
 mean_lifeExp %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 Then we reshape it to one row per year and one variable for each continent.
@@ -235,7 +499,9 @@ reshape_mean_lifeExp <- mean_lifeExp %>%
 
 # show the table
 reshape_mean_lifeExp %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 The reshaped tibble is better, if you only want to have data of one continent. For example, we try to get data of Africa and show it as line plot.
@@ -305,7 +571,9 @@ my_gap_final <- tibble(
 
 # show the table
 my_gap_final %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ## Activity #5
@@ -332,7 +600,7 @@ Some of these functions belong to package `reshape2`, and assuming it is already
 
 ```{r}
 # load reshape2
-library(reshape2)
+suppressPackageStartupMessages(library(reshape2))
 ```
 
 
@@ -347,7 +615,9 @@ split <- my_gap %>%
 
 # display the table
 split %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ### Stack
@@ -361,10 +631,14 @@ melt_attributes <- mtcars_with_car %>%
 
 # show previews 
 head(melt_attributes) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 
 tail(melt_attributes) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 
@@ -382,7 +656,9 @@ mtcars_transpose <- data.frame(t(mtcars_ori))
 
 # display the table with only first six columns
 mtcars_transpose[, 1:6] %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 # Join Prompts (join, merge, look up)
@@ -396,7 +672,9 @@ According to [Data from Gapminder](https://cran.r-project.org/web/packages/gapmi
 ```{r}
 # show a preview of country_code
 head(country_codes) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 `country_codes` contains rows for all country, so somehow for every row in the full `gapminder` data frame, we can find at least one matching records in `country_codes`. To make it more intersting, we trim `gapminder` to include only countries in "Americas". We also try to select a single year, say 1952.
@@ -408,7 +686,9 @@ gapminder_Americas <- gapminder %>%
 
 # show a preview
 head(gapminder_Americas) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 
@@ -425,13 +705,17 @@ We explore the following join functions:
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-inner_join(x = gapminder_Americas, y = country_codes) %>% 
-  knitr::kable()
+inner_join(x = gapminder_Americas, y = country_codes, by = "country") %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ```{r}
-inner_join(x = country_codes, y = gapminder_Americas) %>% 
-  knitr::kable()
+inner_join(x = country_codes, y = gapminder_Americas, by = "country") %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 **Finding(s):** After `inner_join()`, we get rows with countries only exist in `gapminder_Americas`, but for each row, we have columns both from `gapminder_Americas` and `country_codes`. Changing the order of `x` and `y` does not affect the results, since `inner_join()` tries to find overlapping countries in two data frames.
@@ -441,13 +725,17 @@ inner_join(x = country_codes, y = gapminder_Americas) %>%
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-semi_join(x = gapminder_Americas, y = country_codes) %>% 
-  knitr::kable()
+semi_join(x = gapminder_Americas, y = country_codes, by = "country") %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ```{r}
-semi_join(x = country_codes, y = gapminder_Americas) %>% 
-  knitr::kable()
+semi_join(x = country_codes, y = gapminder_Americas, by = "country") %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 **Finding(s):** Compare to `inner_join()`, `semi_join()` also returns overlapping countries only as rows. However, the columns depend on which data frame is provided as `x`.
@@ -457,13 +745,17 @@ semi_join(x = country_codes, y = gapminder_Americas) %>%
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-left_join(x = gapminder_Americas, y = country_codes) %>% 
-  knitr::kable()
+left_join(x = gapminder_Americas, y = country_codes, by = "country") %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ```{r}
-left_join(x = country_codes, y = gapminder_Americas)  %>% 
-  knitr::kable()
+left_join(x = country_codes, y = gapminder_Americas, by = "country")  %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 **Finding(s):** Using `left_join()`, rows depend on what countries we have in `x`. All columns in `x` and `y` are used to form the final table. However, since we cannot find all countries in `gapminder_Americas`, for those countries only exist in `country_codes`, the values are `NA` for columns in `gapminder_Americas`.
@@ -474,12 +766,14 @@ In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
 # there is no record in the result so no table is shown
-anti_join(x = gapminder_Americas, y = country_codes)
+anti_join(x = gapminder_Americas, y = country_codes, by = "country")
 ```
 
 ```{r}
-anti_join(x = country_codes, y = gapminder_Americas)  %>% 
-  knitr::kable()
+anti_join(x = country_codes, y = gapminder_Americas, by = "country")  %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 **Finding(s):** `anti_join()` is interesting that it shows rows in `x` that cannot be found a matching value in `y`, and columns to shown depend on `x`:
@@ -492,13 +786,17 @@ anti_join(x = country_codes, y = gapminder_Americas)  %>%
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-full_join(x = gapminder_Americas, y = country_codes) %>% 
-  knitr::kable()
+full_join(x = gapminder_Americas, y = country_codes, by = "country") %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ```{r}
-full_join(x = country_codes, y = gapminder_Americas)  %>% 
-  knitr::kable()
+full_join(x = country_codes, y = gapminder_Americas, by = "country")  %>% 
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 **Finding(s):** It is expected that the above two tables generated by `full_join()` have the same results, since this function shows all rows and columns from both `x` and `y`. Due to the data frames we choose (countries in `gapminder_Americas` is actually a subset of `country_codes`), the resultant tables are with the identical data as running `left_join(x=country_codes, y=gapminder_Americas)`.
@@ -511,12 +809,16 @@ In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
 merge(x = gapminder_Americas, y = country_codes) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ```{r}
 merge(x = country_codes, y = gapminder_Americas) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 **Finding(s):** From the results, by default, we can conclude that `merge()` is the same as `inner_join()`.
@@ -527,7 +829,9 @@ Actually it is also possible to use `merge()` to implement `full_join()` and `le
 
 ```{r}
 merge(x = gapminder_Americas, y = country_codes, all = TRUE) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 #### Implement `left_join()` using `merge()`
@@ -536,14 +840,18 @@ Notice that the order of `x` and `y` is important in this example.
 
 ```{r}
 merge(x = gapminder_Americas, y = country_codes, all.x = TRUE) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = T)
 ```
 
 ### `match()`
 
 ```{r}
 match(gapminder_Americas$country, country_codes$country) %>% 
-  knitr::kable()
+  knitr::kable(format = "html") %>% 
+  # add styling to make table look better
+  kableExtra::kable_styling(full_width = F)
 ```
 
 **Finding(s):** For the example we can know, there are some disadvantages using `match()` compared to `merge()` or join functions:
@@ -553,4 +861,5 @@ match(gapminder_Americas$country, country_codes$country) %>%
 
 # References
 - [Data manipulation with tidyr](https://www.r-bloggers.com/data-manipulation-with-tidyr/)
+- [Package `tidyr`](https://cran.r-project.org/web/packages/tidyr/tidyr.pdf)
 - [Cheatsheet for dplyr join functions](http://stat545.com/bit001_dplyr-cheatsheet.html)
