@@ -6,14 +6,15 @@ output:
   html_document:
     keep_md: true
     toc: true
+    toc_depth: 4
 ---
 
 # Bring rectangular data in
 ```{r}
 ## load gapminder
-library(gapminder)
+suppressPackageStartupMessages(library(gapminder))
 ## load tidyverse
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
 ```
 
 # Data Reshaping Prompts (and relationship to aggregation)
@@ -146,7 +147,7 @@ head(unite_gdp) %>%
 ```{r}
 # separate into original columns. Notice that we need to use two backslashes as escape character.
 sep_gdp <- unite_gdp %>% 
-  separate(overall_gdp, c("pop", "gdpPercap"), sep="\\*")
+  separate(overall_gdp, c("pop", "gdpPercap"), sep = "\\*")
 
 # show a preview
 head(sep_gdp) %>% 
@@ -182,11 +183,11 @@ names(lifeExp_Oceania) <- str_replace_all(names(lifeExp_Oceania), " ", "_")
 lifeExp_Oceania %>% 
   ggplot() +
   # make a line plot with points for Australia
-  geom_line(aes(x=year, y=Australia, color="Australia")) +
-  geom_point(aes(x=year, y=Australia, color="Australia")) +
+  geom_line(aes(year, Australia, color = "Australia")) +
+  geom_point(aes(year, Australia, color = "Australia")) +
   # make a line plot with points for New_Zealand
-  geom_line(aes(x=year, y=New_Zealand, color="New Zealand")) +
-  geom_point(aes(x=year, y=New_Zealand, color="New Zealand")) +
+  geom_line(aes(year, New_Zealand, color = "New Zealand")) +
+  geom_point(aes(year, New_Zealand, color = "New Zealand")) +
   # change color legent
   scale_color_discrete("country")
 ```
@@ -196,11 +197,11 @@ Let's also compare them side-by-side.
 ```{r}
 lifeExp_Oceania %>% 
   # Auatralia as x axis and New_Zealand as y axis, color as year
-  ggplot(aes(x=Australia, y=New_Zealand, color=factor(year))) +
+  ggplot(aes(Australia, New_Zealand, color = factor(year))) +
   # make it a scatterplot
   geom_point() +
   # try to draw a regression curve
-  geom_smooth(method="lm", se=FALSE, color="black")
+  geom_smooth(method = "lm", se = FALSE, color = "black")
 ```
 
 We can learn from the figures that, after around 1973, the lifeExp in Australia becomes larger than New_Zealand.
@@ -245,14 +246,14 @@ mean_lifeExp %>%
   # need to filter continent as Africa
   filter(continent == "Africa") %>% 
   # year as x axis and mean_lifeExp as y axis
-  ggplot(aes(x=year, y=mean_lifeExp)) +
+  ggplot(aes(year, mean_lifeExp)) +
   # make it a line plot with point
   geom_line() +
   geom_point()
 
 reshape_mean_lifeExp %>% 
   # year as x axis and Africa as y axis
-  ggplot(aes(x=year, y=Africa)) +
+  ggplot(aes(year, Africa)) +
   # make it a line plot with point
   geom_line() +
   geom_point()
@@ -285,7 +286,7 @@ We reshape it into one row per year.
 ```{r}
 # unite country and lifeExp
 my_gap_unite <- my_gap %>% 
-  unite(country_lifeExp, country, lifeExp, sep=",")
+  unite(country_lifeExp, country, lifeExp, sep = ",")
 
 # get maximum records for each year (even rows)
 my_gap_max <- my_gap_unite %>% 
@@ -296,7 +297,7 @@ my_gap_min <- my_gap_unite %>%
   filter(row_number() %% 2 == 1)
 
 # combine data together
-my_gap_final <- data.frame(
+my_gap_final <- tibble(
   year = my_gap_max$year,
   max_country_lifeExp = my_gap_max$country_lifeExp,
   min_country_lifeExp = my_gap_min$country_lifeExp
@@ -342,7 +343,7 @@ Here we show that `dcast()` is actually similar to `spread()`. The following exa
 ```{r}
 split <- my_gap %>% 
   # year as rows and country as columns, fill lifeExp as values
-  dcast(year~country, value.var="lifeExp")
+  dcast(year ~ country, value.var = "lifeExp")
 
 # display the table
 split %>% 
@@ -356,7 +357,7 @@ Here we show that `melt()` is actually similar to `group()`. The following examp
 ```{r}
 melt_attributes <- mtcars_with_car %>% 
   # melt and use car as index
-  melt(id="car")
+  melt(id = "car")
 
 # show previews 
 head(melt_attributes) %>% 
@@ -379,8 +380,8 @@ mtcars_ori <- mtcars %>%
 # transpose data frame
 mtcars_transpose <- data.frame(t(mtcars_ori))
 
-# display the 
-mtcars_transpose %>% 
+# display the table with only first six columns
+mtcars_transpose[, 1:6] %>% 
   knitr::kable()
 ```
 
@@ -424,64 +425,64 @@ We explore the following join functions:
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-inner_join(x=gapminder_Americas, y=country_codes) %>% 
+inner_join(x = gapminder_Americas, y = country_codes) %>% 
   knitr::kable()
 ```
 
 ```{r}
-inner_join(x=country_codes, y=gapminder_Americas) %>% 
+inner_join(x = country_codes, y = gapminder_Americas) %>% 
   knitr::kable()
 ```
 
-After `inner_join()`, we get rows with countries only exist in `gapminder_Americas`, but for each row, we have columns both from `gapminder_Americas` and `country_codes`. Changing the order of `x` and `y` does not affect the results, since `inner_join()` tries to find overlapping countries in two data frames.
+**Finding(s):** After `inner_join()`, we get rows with countries only exist in `gapminder_Americas`, but for each row, we have columns both from `gapminder_Americas` and `country_codes`. Changing the order of `x` and `y` does not affect the results, since `inner_join()` tries to find overlapping countries in two data frames.
 
 ### `semi_join()`
 
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-semi_join(x=gapminder_Americas, y=country_codes) %>% 
+semi_join(x = gapminder_Americas, y = country_codes) %>% 
   knitr::kable()
 ```
 
 ```{r}
-semi_join(x=country_codes, y=gapminder_Americas) %>% 
+semi_join(x = country_codes, y = gapminder_Americas) %>% 
   knitr::kable()
 ```
 
-Compare to `inner_join()`, `semi_join()` also returns overlapping countries only as rows. However, the columns depend on which data frame is provided as `x`.
+**Finding(s):** Compare to `inner_join()`, `semi_join()` also returns overlapping countries only as rows. However, the columns depend on which data frame is provided as `x`.
 
 ### `left_join()`
 
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-left_join(x=gapminder_Americas, y=country_codes) %>% 
+left_join(x = gapminder_Americas, y = country_codes) %>% 
   knitr::kable()
 ```
 
 ```{r}
-left_join(x=country_codes, y=gapminder_Americas)  %>% 
+left_join(x = country_codes, y = gapminder_Americas)  %>% 
   knitr::kable()
 ```
 
-Using `left_join()`, rows depend on what countries we have in `x`. All columns in `x` and `y` are used to form the final table. However, since we cannot find all countries in `gapminder_Americas`, for those countries only exist in `country_codes`, the values are `NA` for columns in `gapminder_Americas`.
+**Finding(s):** Using `left_join()`, rows depend on what countries we have in `x`. All columns in `x` and `y` are used to form the final table. However, since we cannot find all countries in `gapminder_Americas`, for those countries only exist in `country_codes`, the values are `NA` for columns in `gapminder_Americas`.
 
 ### `anti_join()`
 
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-anti_join(x=gapminder_Americas, y=country_codes) %>% 
-  knitr::kable()
+# there is no record in the result so no table is shown
+anti_join(x = gapminder_Americas, y = country_codes)
 ```
 
 ```{r}
-anti_join(x=country_codes, y=gapminder_Americas)  %>% 
+anti_join(x = country_codes, y = gapminder_Americas)  %>% 
   knitr::kable()
 ```
 
-`anti_join()` is interesting that it shows rows in `x` that cannot be found a matching value in `y`, and columns to shown depend on `x`:
+**Finding(s):** `anti_join()` is interesting that it shows rows in `x` that cannot be found a matching value in `y`, and columns to shown depend on `x`:
 
 - Since one can find all country in `gapminder_Americas` in `country_codes`, the first table is empty.
 - The second table actually shows countries that do not exist in `gapminder_Americas`.
@@ -491,16 +492,16 @@ anti_join(x=country_codes, y=gapminder_Americas)  %>%
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-full_join(x=gapminder_Americas, y=country_codes) %>% 
+full_join(x = gapminder_Americas, y = country_codes) %>% 
   knitr::kable()
 ```
 
 ```{r}
-full_join(x=country_codes, y=gapminder_Americas)  %>% 
+full_join(x = country_codes, y = gapminder_Americas)  %>% 
   knitr::kable()
 ```
 
-It is expected that the above two tables generated by `full_join()` have the same results, since this function shows all rows and columns from both `x` and `y`. Due to the data frames we choose (countries in `gapminder_Americas` is actually a subset of `country_codes`), the resultant tables are with the identical data as running `left_join(x=country_codes, y=gapminder_Americas)`.
+**Finding(s):** It is expected that the above two tables generated by `full_join()` have the same results, since this function shows all rows and columns from both `x` and `y`. Due to the data frames we choose (countries in `gapminder_Americas` is actually a subset of `country_codes`), the resultant tables are with the identical data as running `left_join(x=country_codes, y=gapminder_Americas)`.
 
 ## Activity #3
 
@@ -509,23 +510,23 @@ It is expected that the above two tables generated by `full_join()` have the sam
 In the following two examples, we change the order of `x` and `y`.
 
 ```{r}
-merge(x=gapminder_Americas, y=country_codes) %>% 
+merge(x = gapminder_Americas, y = country_codes) %>% 
   knitr::kable()
 ```
 
 ```{r}
-merge(x=country_codes, y=gapminder_Americas) %>% 
+merge(x = country_codes, y = gapminder_Americas) %>% 
   knitr::kable()
 ```
 
-From the results, by default, we can conclude that `merge()` is the same as `inner_join()`.
+**Finding(s):** From the results, by default, we can conclude that `merge()` is the same as `inner_join()`.
 
 Actually it is also possible to use `merge()` to implement `full_join()` and `left_join()`.
 
 #### Implement `full_join()` using `merge()`
 
 ```{r}
-merge(x=gapminder_Americas, y=country_codes, all=TRUE) %>% 
+merge(x = gapminder_Americas, y = country_codes, all = TRUE) %>% 
   knitr::kable()
 ```
 
@@ -534,7 +535,7 @@ merge(x=gapminder_Americas, y=country_codes, all=TRUE) %>%
 Notice that the order of `x` and `y` is important in this example.
 
 ```{r}
-merge(x=gapminder_Americas, y=country_codes, all.x=TRUE) %>% 
+merge(x = gapminder_Americas, y = country_codes, all.x = TRUE) %>% 
   knitr::kable()
 ```
 
@@ -545,7 +546,7 @@ match(gapminder_Americas$country, country_codes$country) %>%
   knitr::kable()
 ```
 
-For the example we can know, there are some disadvantages using `match()` compared to `merge()` or join functions:
+**Finding(s):** For the example we can know, there are some disadvantages using `match()` compared to `merge()` or join functions:
 
 - It only works for two vectors.
 - It only returns indeces of matching items.
